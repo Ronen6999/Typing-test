@@ -246,7 +246,7 @@ function App() {
         </div>
       )}
 
-      {finished && (
+      { (
         <footer className="app-footer">
           <span>Built with ❤️</span>
           <a href="https://github.com/ronen6999/Typing-test" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
