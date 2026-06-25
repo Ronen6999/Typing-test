@@ -87,7 +87,7 @@ const getRoast = (wpm, accuracy) => {
 
 function App() {
 
-  const containerRef = useRef(null);
+  const inputRef = useRef(null);
   const [text, setText] = useState(texts[0]);
   const [input, setInput] = useState("");
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -96,10 +96,8 @@ function App() {
 
   useEffect(() => {
     // Focus the container to capture key events
-    if (containerRef.current) {
-      containerRef.current.focus();
-    }
-  }, []);
+    inputRef.current?.focus();
+  }, [finished]);
 
   useEffect(() => {
     if (!started || finished) return;
@@ -119,20 +117,29 @@ function App() {
   }, [input, text]);
 
   const handleKeyDown = (e) => {
-    if (finished) return;
+    // Allow backspace to work naturally with the input field
+    if (e.key === 'Backspace') {
+      if (!started && input.length > 0) setStarted(true);
+      return;
+    }
+    // Prevent all other key presses from their default actions
+    // if they are not single characters (e.g., arrow keys, tab)
+    if (e.key.length > 1) {
+      e.preventDefault();
+    }
+  };
 
-    const { key } = e;
-    e.preventDefault(); // Prevent default browser actions
+  const handleInputChange = (e) => {
+    if (finished) return;
 
     if (!started) {
       setStarted(true);
     }
+    setInput(e.target.value);
+  };
 
-    if (key === 'Backspace') {
-      setInput((prev) => prev.slice(0, -1));
-    } else if (key.length === 1) { // Handle printable characters
-      setInput((prev) => prev + key);
-    }
+  const focusInput = () => {
+    inputRef.current?.focus();
   };
 
   const handleRestart = () => {
@@ -147,9 +154,7 @@ function App() {
     setElapsedTime(0);
     setStarted(false);
     setFinished(false);
-    if (containerRef.current) {
-      containerRef.current.focus();
-    }
+    // The useEffect for focusing will handle this on 'finished' state change
   };
 
   // Calculate WPM
@@ -169,7 +174,7 @@ function App() {
   const accuracy = finalInput.length > 0 ? Math.round((correct / finalInput.length) * 100) : 100;
 
   return (
-    <div className="container" ref={containerRef} onKeyDown={handleKeyDown} tabIndex={0}>
+    <div className="container" onClick={focusInput}>
       <img
         src="https://res.cloudinary.com/dymxdpunk/image/upload/v1782410997/pngegg_1_sbnkc9.png"
         alt="Typing Test Logo"
@@ -182,7 +187,7 @@ function App() {
         <div>Accuracy: {accuracy}%</div>
       </div>
 
-      <div className="text-display">
+      <div className="text-display" onClick={focusInput}>
         {text.split("").map((char, index) => {
           let colorClass = "";
           if (index < input.length) {
@@ -206,6 +211,17 @@ function App() {
         })}
         {input.length === text.length && !finished && <span className="caret-end"></span>}
       </div>
+
+      <input
+        ref={inputRef}
+        type="text"
+        className="hidden-input"
+        value={input}
+        onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        disabled={finished}
+      />
 
       {!started && !finished && <div className="placeholder">Start typing cutie...</div>}
 
